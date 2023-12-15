@@ -261,19 +261,19 @@ For the next steps, please have the REST URL string handy while completing this 
 
 https://solman.sap.ibm.com:8272/sap/opu/odata/sap/ZALERT_SYSTEM_TOPOLOGY_SRV/SYSTEMSSet?$expand=SystemToHeader/HeaderToItem/ItemToMatrics
 
-![Figure-19](assets/ipstep3.2.2.png)
+![Figure-19](assets/ipStep3.2.2.png)
 
 If you wish to connect another Solution manager, you can choose `y` for the next prompt.
 
-![Figure-20](assets/ipstep3.2.3.png)
+![Figure-20](assets/ipStep3.2.3.png)
 
 The Integration Proxy now will be installed with the following final messages:
 
-![Figure-21](assets/ipstep3.2.4.png)
+![Figure-21](assets/ipStep3.2.4.png)
 
 You can run the last command to see the pods getting created. Finally, the pods listing will look like the following:
 
-![Figure-22](assets/ipstep3.2.5.png)
+![Figure-22](assets/ipStep3.2.5.png)
 
 ##### Step 3.3
 Edit the `<instana_agent_install_dir>/etc/instana/configuration.yaml` file and uncomment `com.instana.plugin.ibmapmproxy` proxy to look like the following:
