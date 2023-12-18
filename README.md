@@ -1,13 +1,14 @@
 # Instana-SAP-Observability
 
-The phase 1 of SAP Observability offering by Instana extracts metrics, exception, events and topology from SAP Solution Manager.  
+Instana extracts metrics, exception, events and topology from SAP Solution Manager.  
 
+### Prerequisites
 The prerequisites for this phase are:
    1. SAP Solution Manager v7.2 (SolMan)
    2. The necessary SAP systems to be monitored are connected to this SolMan.
    3. SolMan is configured with System Monitoring templates for these SAP components.
    4. A system user created in SolMan for the Instana to connect to.
-   5. An Ubuntu or Linux host with 4 CPU 8 GB memory for Instana Integration Proxy.
+   5. A Linux host with 4 CPU 8 GB memory for Instana Integration Proxy.
 
 Instana then extracts the system monitoring data from SolMan by adding a OData REST endpoint. The SAP data is converted to Instana format using a component called Instana Integration Proxy.
 
@@ -126,7 +127,7 @@ Execute `/IWFND/MAINT_SERVICE` transaction code
 
 Instana Integration Proxy is a process that converts the data from SAP Solution Manager to Instana format.  It identifies and separates the SAP entities, correlates the topology of related entities, transforms performance metrics to Instana compatible format, and generates alerts from events.
 
-This Instana component needs to be installed as a separate application for the closed beta.  This will eventually be folded into the Instana agent soon and will not require this additional installation step.
+This Instana component needs to be installed as a separate application.  This will eventually be folded into the Instana agent soon and will not require this additional installation step.
 This component should be installed on a Linux amd64 machine, typically on a remote machine.  It will connect to the OData REST endpoint configured in the SAP Solution Manager.
 
 The Integration Proxy is a native-cloud application and is deployed as Kubernetes pods. 
@@ -237,7 +238,8 @@ sudo yum install jq
 
 ##### Step 3.1
 
-Extract (unzip) the Integration Proxy installation package `instana-integration-proxy-linux-amd64-1.4.0-2023-05-16-15%3A05.zip`. 
+Extract (unzip) the Integration Proxy installation from https://github.com/instana/ibm-monitoring-integration/releases and package name will be of the format  
+`instana-integration-proxy-linux-amd64-1.4.0-DATE.zip`. 
 
 This will create a new subdirectory called `instana-integration-proxy-linux-amd64`.  
 
@@ -255,11 +257,7 @@ During this step, the Integration Proxy will prompt for Instana agent key and as
 
 Select the defaults for storage class, Ingress class, etc. with default choices:
 
-![Figure-18](assets/ipstep3.1.png)
-
-For the next steps, please have the REST URL string handy while completing this part. For example, the parameters are selected from the following example:
-
-https://solman.sap.ibm.com:8272/sap/opu/odata/sap/ZALERT_SYSTEM_TOPOLOGY_SRV/SYSTEMSSet?$expand=SystemToHeader/HeaderToItem/ItemToMatrics
+For the next steps, please have the REST URL string handy while completing this part.
 
 ![Figure-19](assets/ipStep3.2.2.png)
 
