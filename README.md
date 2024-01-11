@@ -58,70 +58,98 @@ The Basis administrator will need to create a user (using SU01) and provide the 
 
 Install the OData service in the SAP Solution Manager by following these steps from the SAP GUI. 
 
-The following files have been provided by Instana for ODATA Installations.
+The following files have been provided by Instana for ODATA Installations in the resources folder.
 
-1. gw_client_data.edmx
-2. GET_EXPANDED_ENTITYSET.txt
+1. [gw_client_data.edmx](resources/gw_client_data.edmx)
+2. [GET_EXPANDED_ENTITYSET.txt](resources/GET_EXPANDED_ENTITYSET.txt)
 
 Log into the SAP Solution Manager through SAP GUI.
 
-#### Step1:   Run transaction `SEGW` and create a new project
+**Note:** The user who logs into SAP GUI to create this service should have ABAP developer role and registered as developer using Developer Access Key.
 
-![Figure-1](assets/OdataStep1.png)
+#### Step1: Create a custom package called ZINSTANA using TCode SE21, where the OData service will be installed
 
-![Figure-2](assets/OdataStep1.1.png)
+![Figure-1](assets/zInstana1.png)
 
-#### Step 2:  Import the provided `gw_client_data.edmx` file.
+![Figure-2](assets/zInstana2.png)
 
-![Figure-3](assets/OdataStep2.png)
+And save it in a Transport Request:
 
-![Figure-4](assets/OdataStep2.1.png)
+![Figure-3](assets/zInstana3.png)
 
-![Figure-5](assets/OdataStep2.3.png)
+#### Step2:   Run transaction `SEGW` and create a new project
 
-#### Step 3:   Activate OData service and save in transport request.
+![Figure-4](assets/OdataStep1.png)
 
-![Figure-6](assets/OdataStep3.png)
+![Figure-5](assets/OdataStep1.1.png)
+
+The new project can be saved in a new Transport Request.
+
+#### Step 3:  Import the provided `gw_client_data.edmx` file.
+
+![Figure-6](assets/OdataStep2.png)
+
+![Figure-7](assets/OdataStep2.1.png)
+
+![Figure-8](assets/OdataStep2.3.png)
+
+#### Step 4:   Activate OData service and save in transport request.
+
+![Figure-9](assets/OdataStep3.png)
 
 System automatically will create the new classes as shown below. Save it in package and Transport request.
 
-![Figure-7](assets/OdataStep3.1.png)
-![Figure-8](assets/OdataStep3.2.png)
+![Figure-10](assets/OdataStep3.1.png)
+![Figure-11](assets/OdataStep3.2.png)
 
-#### Step 4:  Right click on `ZCL_ZALERT_SYSTEM_TOPO_DPC_EXT` and select `Go to ABAP Workbench` as shown below:
+#### Step 5:  Right click on `ZCL_ZALERT_SYSTEM_TOPO_DPC_EXT` and select `Go to ABAP Workbench` as shown below:
 
-![Figure-9](assets/OdataStep4.png)
+![Figure-12](assets/OdataStep4.png)
  - Select the `/IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_EXPANDED_ENTITYSET` to redefine it.
-![Figure-10](assets/OdataStep4.1.png)
+![Figure-13](assets/OdataStep4.1.png)
  - Copy and paste the new code from the provided `GET_EXPANDED_ENTITYSET.txt` file. 
  - Activate the whole class. 
  - Return to the `SEGW` transaction
  - Select the project and activate it.
 
-#### Step 5:  Copy `ZALERT_SYSTEM_TOPOLOGY_SRV` and register OData service:
+#### Step 6:  Copy `ZALERT_SYSTEM_TOPOLOGY_SRV` and register OData service:
 
-![Figure-11](assets/OdataStep5.png)
+![Figure-14](assets/OdataStep5.png)
 
 Execute `/IWFND/MAINT_SERVICE` transaction code
 
-![Figure-12](assets/OdataStep5.1.png)
-![Figure-13](assets/OdataStep5.2.png)
+![Figure-15](assets/OdataStep5.1.png)
+![Figure-16](assets/OdataStep5.2.png)
 
 - Add Selected services:
 
-![Figure-14](assets/OdataStep5.3.png)
+![Figure-17](assets/OdataStep5.3.png)
 
-#### Step 6:  Add into package and Transport request
+#### Step 7:  Add into package and Transport request
 
-![Figure-15](assets/OdataStep6.png)
+![Figure-18](assets/OdataStep6.png)
 
-#### Step 7:  Click on the “SAP Gateway Client”
+#### Step 8:  Click on the “SAP Gateway Client” (or execute `/n/IWFND/GW_CLIENT`TCode from the main SAP GUI)
 
-![Figure-16](assets/OdataStep7.png)
+![Figure-19](assets/OdataStep7.png)
 
  - Execute the below Request URL:
 
 `/sap/opu/odata/sap/ZALERT_SYSTEM_TOPOLOGY_SRV/SYSTEMSSet?$expand=SystemToHeader/HeaderToItem/ItemToMatrics&$format=json `
+
+If the status code is `200` and the JSON payload is seen in HTTP Response, then the Instana OData service has been successfully installed.
+To obtain the URL to be used by Instana Integration Service, select SAP Gateway Client menu / Call Browser menu item.
+
+![Figure-20](assets/OdataStep8.1.png)
+
+Try executing the HTTP or HTTPS URLs based on the security configuration and verify that the JSON payload is obtained.
+This URL should then be used during Instana Integration Service configuration for SAP, which is explained in the next section.
+
+![Figure-21](assets/OdataStep8.2.png)
+
+The Integration Proxy is a native-cloud application and is deployed as Kubernetes pods. Instana may recommend using a production-ready environment like RedHat Open Shift cluster.
+
+However , below are the steps for installation of the Instana Integration proxy on a microk8s for faster POC setup or exploartion purposes.
 
 ## IV. Instana Integration Proxy
 
@@ -129,9 +157,6 @@ Instana Integration Proxy is a process that converts the data from SAP Solution 
 
 This Instana component needs to be installed as a separate application.  This will eventually be folded into the Instana agent soon and will not require this additional installation step.
 This component should be installed on a Linux amd64 machine, typically on a remote machine.  It will connect to the OData REST endpoint configured in the SAP Solution Manager.
-
-The Integration Proxy is a native-cloud application and is deployed as Kubernetes pods. 
-Instana may recommend using a production-ready environment like RedHat Open Shift cluster.
 
 Also, Instana is reengineering this application to be run in a regular Instana agent and the Kubernetes requirement will no longer be necessary soon.
 
@@ -253,25 +278,25 @@ Install the Integration Proxy by running deploy.sh from this subdirectory
 
 During this step, the Integration Proxy will prompt for Instana agent key and ask for integrations to be included.  Answer `n` to V6/V8 and Omegamon options and `y` to SAP:
 
-![Figure-17](assets/ipstep3.2.png)
+![Figure-22](assets/ipstep3.2.png)
 
 Select the defaults for storage class, Ingress class, etc. with default choices:
 
 For the next steps, please have the REST URL string handy while completing this part.
 
-![Figure-19](assets/ipStep3.2.2.png)
+![Figure-23](assets/ipStep3.2.2.png)
 
 If you wish to connect another Solution manager, you can choose `y` for the next prompt.
 
-![Figure-20](assets/ipStep3.2.3.png)
+![Figure-24](assets/ipStep3.2.3.png)
 
 The Integration Proxy now will be installed with the following final messages:
 
-![Figure-21](assets/ipStep3.2.4.png)
+![Figure-25](assets/ipStep3.2.4.png)
 
 You can run the last command to see the pods getting created. Finally, the pods listing will look like the following:
 
-![Figure-22](assets/ipStep3.2.5.png)
+![Figure-26](assets/ipStep3.2.5.png)
 
 ##### Step 3.3
 Edit the `<instana_agent_install_dir>/etc/instana/configuration.yaml` file and uncomment `com.instana.plugin.ibmapmproxy` proxy to look like the following:
