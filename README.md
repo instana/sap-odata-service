@@ -147,9 +147,6 @@ This URL should then be used during Instana Integration Service configuration fo
 
 ![Figure-21](assets/OdataStep8.2.png)
 
-The Integration Proxy is a native-cloud application and is deployed as Kubernetes pods. Instana may recommend using a production-ready environment like RedHat Open Shift cluster.
-
-However , below are the steps for installation of the Instana Integration proxy on a microk8s for faster POC setup or exploartion purposes.
 
 ## IV. Instana Integration Proxy
 
@@ -159,6 +156,10 @@ This Instana component needs to be installed as a separate application.  This wi
 This component should be installed on a Linux amd64 machine, typically on a remote machine.  It will connect to the OData REST endpoint configured in the SAP Solution Manager.
 
 Also, Instana is reengineering this application to be run in a regular Instana agent and the Kubernetes requirement will no longer be necessary soon.
+
+**Note**: The Integration Proxy is a native-cloud application and is deployed as Kubernetes pods. Instana may recommend using a production-ready environment like RedHat Open Shift cluster.
+
+However , below are the steps for the easy installation of the Instana Integration proxy on a microk8s.
 
 ### Prerequisites for Instana Integration Proxy
 
