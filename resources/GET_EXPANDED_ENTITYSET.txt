@@ -1,0 +1,248 @@
+class ZCL_ZALERT_SYSTEM_TOPO_DPC_EXT definition
+  public
+  inheriting from ZCL_ZALERT_SYSTEM_TOPO_DPC
+  create public .
+
+public section.
+
+  methods /IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_EXPANDED_ENTITYSET
+    redefinition .
+protected section.
+private section.
+ENDCLASS.
+
+
+
+CLASS ZCL_ZALERT_SYSTEM_TOPO_DPC_EXT IMPLEMENTATION.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_ZALERT_SYSTEM_TOPO_DPC_EXT->/IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_EXPANDED_ENTITYSET
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING(optional)
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING(optional)
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING(optional)
+* | [--->] IT_FILTER_SELECT_OPTIONS       TYPE        /IWBEP/T_MGW_SELECT_OPTION(optional)
+* | [--->] IT_ORDER                       TYPE        /IWBEP/T_MGW_SORTING_ORDER(optional)
+* | [--->] IS_PAGING                      TYPE        /IWBEP/S_MGW_PAGING(optional)
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH(optional)
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR(optional)
+* | [--->] IV_FILTER_STRING               TYPE        STRING(optional)
+* | [--->] IV_SEARCH_STRING               TYPE        STRING(optional)
+* | [--->] IO_EXPAND                      TYPE REF TO /IWBEP/IF_MGW_ODATA_EXPAND(optional)
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITYSET(optional)
+* | [<---] ER_ENTITYSET                   TYPE REF TO DATA
+* | [<---] ET_EXPANDED_CLAUSES            TYPE        STRING_TABLE
+* | [<---] ET_EXPANDED_TECH_CLAUSES       TYPE        STRING_TABLE
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        TY_S_MGW_RESPONSE_CONTEXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method /IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_EXPANDED_ENTITYSET.
+
+
+    IF iv_entity_set_name = 'SYSTEMSSet'.
+
+
+      DATA:  BEGIN OF t_orderitems.
+               INCLUDE             TYPE  ZCL_ZALERT_SYSTEM_TOPO_MPC_EXT=>ts_item.
+               DATA: itemtomatrics TYPE  ZCL_ZALERT_SYSTEM_TOPO_MPC_EXT=>tt_matrics,
+             END OF t_orderitems.
+
+      DATA:  BEGIN OF t_systemtoheader.
+               INCLUDE              TYPE  ZCL_ZALERT_SYSTEM_TOPO_MPC_EXT=>ts_header.
+               DATA: headertoitem LIKE TABLE OF t_orderitems,
+             END OF t_systemtoheader.
+
+      DATA: BEGIN OF ty_expand1.
+              INCLUDE TYPE ZCL_ZALERT_SYSTEM_TOPO_MPC_EXT=>ts_systems.
+              DATA: systemtoheader LIKE TABLE OF t_systemtoheader,
+            END OF ty_expand1.
+
+
+
+      DATA: it_expand LIKE TABLE OF ty_expand1,
+            wa_expand LIKE ty_expand1.
+
+
+
+      CONSTANTS:lc_system(20)          VALUE 'T_SYSTEM',
+                lc_domain              TYPE dd07l-domname VALUE 'AC_CONTEXT_TYPE',
+                lc_lang                TYPE dd07t-ddlanguage VALUE 'E',
+                lc_src                 TYPE ac_text_255 VALUE 'noreply@mydomain.com',
+                lc_expand_tech_clause1 TYPE string VALUE 'HeaderToItem',
+                lc_expand_tech_clause2 TYPE string VALUE 'HeaderToItem/ItemToMatrics'.
+
+
+      DATA: lo_consumer_connector TYPE REF TO cl_alert_consumer_connector,
+
+            lt_system             TYPE ZCL_ZALERT_SYSTEM_TOPO_MPC_EXT=>tt_systems,
+            ls_system             TYPE ZCL_ZALERT_SYSTEM_TOPO_MPC_EXT=>ts_systems,
+
+
+            lt_header             TYPE ZCL_ZALERT_SYSTEM_TOPO_MPC_EXT=>tt_header,
+            ls_header             TYPE ZCL_ZALERT_SYSTEM_TOPO_MPC_EXT=>ts_header,
+
+            lt_items              TYPE ZCL_ZALERT_SYSTEM_TOPO_MPC_EXT=>tt_item,
+            ls_items              TYPE ZCL_ZALERT_SYSTEM_TOPO_MPC_EXT=>ts_item,
+
+            lt_matrics            TYPE ZCL_ZALERT_SYSTEM_TOPO_MPC_EXT=>tt_matrics,
+            ls_matrics            TYPE ZCL_ZALERT_SYSTEM_TOPO_MPC_EXT=>ts_matrics,
+
+
+            ls_item               LIKE t_orderitems,
+            lt_item               LIKE TABLE OF  t_orderitems,
+
+            ls_systemtoheader     LIKE t_systemtoheader,
+            lt_systemtoheader     LIKE TABLE OF  t_systemtoheader,
+
+            lt_text               TYPE STANDARD TABLE OF dd07v,
+            lv_text               TYPE bapi_msg,
+            lv_context_name       TYPE acs_contextname,
+            lo_exc                TYPE REF TO cx_root.
+
+
+* Instantiate Message Container
+
+      CALL METHOD me->/iwbep/if_mgw_conv_srv_runtime~get_message_container
+        RECEIVING
+          ro_message_container = DATA(lo_message_container).
+
+      DATA(lo_datamanager) = cl_tmon_data_manager_factory=>get_data_manager( ).
+
+* Get T_SYSTEM context names
+
+      SELECT context_id,
+             context_name,
+             context_type,
+             context_subtype,
+             active,
+             global_id
+         FROM accontextdir
+        INTO TABLE @DATA(lt_context_name)
+       WHERE context_type = @lc_system
+       AND active = @abap_true.
+
+
+
+      LOOP AT lt_context_name ASSIGNING FIELD-SYMBOL(<lfs_context>).
+
+        " System details
+
+        ls_system-src  = 'noreply@mydomain.com'.
+        ls_system-parentcontextid =  '' .
+        ls_system-contextid = <lfs_context>-context_id.
+        ls_system-name = <lfs_context>-context_name.
+        ls_system-objecttype = <lfs_context>-context_type.
+
+        MOVE-CORRESPONDING ls_system TO wa_expand.
+
+        CLEAR: lv_context_name.
+
+        lv_context_name = <lfs_context>-context_name.
+
+* Get Managed Object details for TechMon
+        TRY.
+            CALL METHOD lo_datamanager->get_details_for_mon_object
+              EXPORTING
+                ip_context_name       = lv_context_name
+              IMPORTING
+                et_mon_object_details = DATA(lt_obj_details).
+          CATCH cx_tmon_data_exception INTO lo_exc.
+
+            lv_text = lo_exc->get_text( ).
+
+* Populate Error if entry not found for ABAP System with Context Name
+            lv_text = | { <lfs_context>-context_name } { lv_text } | .
+
+* Add single message
+            CALL METHOD lo_message_container->add_message_text_only
+              EXPORTING
+                iv_msg_type               = 'E'
+                iv_msg_text               = lv_text
+                iv_add_to_response_header = abap_true.
+*          RETURN.
+
+        ENDTRY.
+
+
+        LOOP AT lt_obj_details INTO DATA(ls_obj_details).
+
+*          " Header Information
+
+          ls_header-src               = 'noreply@mydomain.com'.
+          ls_header-parentcontextid  = ls_obj_details-parent_contextid.
+          ls_header-contextid         = ls_obj_details-contextid.
+          ls_header-name              = ls_obj_details-name.
+          ls_header-objecttype       = ls_obj_details-object_type.
+          ls_header-customer          = ''.
+
+          MOVE-CORRESPONDING ls_header TO ls_systemtoheader.
+
+          LOOP AT ls_obj_details-categories INTO DATA(ls_category).
+
+            " Item Information
+
+            ls_item-src               = lc_src.
+           ls_item-parentcontextid  = ls_obj_details-parent_contextid.
+            ls_item-contextid         = ls_obj_details-contextid.
+            ls_item-name              = ls_obj_details-name.
+            ls_item-category          = ls_category-category.
+            ls_item-event_name        = ls_category-event_name.
+            ls_item-status            = ls_category-status.
+
+*            MOVE-CORRESPONDING ls_item TO LS_SYSTEMTOHEADER-HEADERTOITEM.  " Item
+
+            LOOP AT ls_category-details INTO DATA(ls_details).
+
+              MOVE-CORRESPONDING ls_item TO ls_matrics.
+
+              ls_matrics-parenttypeid    = ls_details-parent_type_id.
+              ls_matrics-typeid           = ls_details-type_id.
+              ls_matrics-event_names       = ls_details-event_name.
+              ls_matrics-tech_event_name   = ls_details-tech_event_name.
+              ls_matrics-rating            = ls_details-rating.
+              ls_matrics-value_max         = ls_details-value_max.
+              ls_matrics-value_min         = ls_details-value_min.
+              LS_MATRICS-VALUE_TEXT        = LS_DETAILS-VALUE_TEXT.
+              ls_matrics-unit              = ls_details-unit.
+              ls_matrics-period            = ls_details-period.
+              ls_matrics-period_unit       = ls_details-period_unit.
+              ls_matrics-greentoyellow     = ls_details-greentoyellow.
+              ls_matrics-yellowtored       = ls_details-yellowtored.
+              ls_matrics-redtoyellow       = ls_details-redtoyellow.
+              ls_matrics-yellowtogreen     = ls_details-yellowtogreen.
+
+              ls_matrics-timestamp       = ls_details-value_timestamp.
+              ls_matrics-value       = ls_details-value_last.
+
+
+              APPEND ls_matrics TO ls_item-itemtomatrics.
+              CLEAR: ls_matrics.
+
+            ENDLOOP.
+
+            APPEND ls_item TO ls_systemtoheader-headertoitem.
+            CLEAR: ls_item.
+
+          ENDLOOP.
+
+          APPEND ls_systemtoheader TO wa_expand-systemtoheader.
+          CLEAR: ls_systemtoheader.
+
+        ENDLOOP.
+        APPEND wa_expand TO it_expand.
+        CLEAR: wa_expand, ls_systemtoheader, lt_obj_details.
+
+      ENDLOOP.
+
+      APPEND lc_expand_tech_clause2 TO et_expanded_clauses.
+
+      copy_data_to_ref( EXPORTING is_data = it_expand
+                        CHANGING cr_data = er_entityset ).
+
+
+    ENDIF.
+
+  endmethod.
+ENDCLASS.
